@@ -1,21 +1,19 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Animated, Pressable, StyleSheet, View } from "react-native";
-import { Text } from "../../../ui/Text";
-import { colors, space } from "../../../ui/theme";
-import { strings } from "../strings";
+import { useField } from "../../../ui/field";
 
 interface Props {
   state: "idle" | "recording" | "busy";
-  onStart: () => void;
-  onStop: () => void;
+  label: string;
+  onPress: () => void;
 }
 
-const SIZE = 132;
+const SIZE = 148;
 
-// Tap to start, tap to stop (auto-stops at 5 s). The pulse runs on the native
-// driver, so it stays smooth even when the JS thread is busy on a slow phone.
-export function MicButton({ state, onStart, onStop }: Props) {
-  // Created once; useState (not useRef) because it is read during render.
+// A filled black disc with a mic shape; while recording it turns red with a stop
+// square and a breathing ring (the one place the app uses colour). Shapes, not an icon font: nothing to download.
+export function MicButton({ state, label, onPress }: Props) {
+  const f = useField();
   const [pulse] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
@@ -25,49 +23,59 @@ export function MicButton({ state, onStart, onStop }: Props) {
     }
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulse, { toValue: 1, duration: 700, useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 0, duration: 700, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 800, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0, duration: 800, useNativeDriver: true }),
       ]),
     );
     loop.start();
     return () => loop.stop();
   }, [state, pulse]);
 
-  const recording = state === "recording";
-  const label = state === "busy" ? strings.transcribing : recording ? strings.micRecording : strings.micIdle;
-
   return (
     <View style={styles.wrap}>
-      <Animated.View style={[styles.halo, { opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0, 0.35] }), transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.25] }) }] }]} />
+      <Animated.View
+        style={[
+          styles.ring,
+          { backgroundColor: f.record, opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0, 0.18] }) },
+          { transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.3] }) }] },
+        ]}
+      />
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={label}
+        accessibilityState={{ busy: state === "busy" }}
         disabled={state === "busy"}
-        onPress={recording ? onStop : onStart}
-        style={({ pressed }) => [styles.button, recording && styles.recording, pressed && styles.pressed]}
+        onPress={onPress}
+        style={({ pressed }) => [styles.disc, { backgroundColor: state === "recording" ? f.record : f.ink }, pressed && styles.pressed]}
       >
-        {state === "busy" ? <ActivityIndicator color={colors.onPrimary} size="large" /> : <View style={recording ? styles.stopIcon : styles.micIcon} />}
+        {state === "busy" ? (
+          <ActivityIndicator size="large" color={f.bg} />
+        ) : state === "recording" ? (
+          <View style={[styles.stop, { backgroundColor: f.bg }]} />
+        ) : (
+          <View style={styles.mic}>
+            <View style={[styles.micCradle, { borderColor: f.bg }]} />
+            <View style={[styles.micHead, { backgroundColor: f.bg }]} />
+            <View style={[styles.micStem, { backgroundColor: f.bg }]} />
+            <View style={[styles.micBase, { backgroundColor: f.bg }]} />
+          </View>
+        )}
       </Pressable>
-      <Text variant="body" style={styles.label}>
-        {label}
-      </Text>
-      {state === "idle" && (
-        <Text variant="caption" muted>
-          {strings.micHint}
-        </Text>
-      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: "center", gap: space(3) },
-  halo: { position: "absolute", top: 0, width: SIZE, height: SIZE, borderRadius: SIZE / 2, backgroundColor: colors.recording },
-  button: { width: SIZE, height: SIZE, borderRadius: SIZE / 2, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center" },
-  recording: { backgroundColor: colors.recording },
-  pressed: { opacity: 0.85 },
-  // Simple shapes instead of an icon font: no extra download, no font loading.
-  micIcon: { width: 28, height: 44, borderRadius: 14, backgroundColor: colors.onPrimary },
-  stopIcon: { width: 34, height: 34, borderRadius: 6, backgroundColor: colors.onPrimary },
-  label: { marginTop: space(2), textAlign: "center" },
+  wrap: { width: SIZE, height: SIZE, alignItems: "center", justifyContent: "center" },
+  ring: { position: "absolute", width: SIZE, height: SIZE, borderRadius: SIZE / 2 },
+  disc: { width: SIZE, height: SIZE, borderRadius: SIZE / 2, alignItems: "center", justifyContent: "center" },
+  pressed: { transform: [{ scale: 0.96 }] },
+  // A studio mic drawn from plain shapes: capsule, U-shaped holder, stem, base.
+  // (The holder's border is the icon's stroke, not a divider.)
+  mic: { width: 52, height: 78 },
+  micHead: { position: "absolute", top: 0, left: 11, width: 30, height: 46, borderRadius: 15 },
+  micCradle: { position: "absolute", top: 22, left: 2, width: 48, height: 34, borderWidth: 5, borderTopWidth: 0, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
+  micStem: { position: "absolute", top: 55, left: 23.5, width: 5, height: 13 },
+  micBase: { position: "absolute", top: 67, left: 12, width: 28, height: 5, borderRadius: 3 },
+  stop: { width: 38, height: 38, borderRadius: 6 },
 });

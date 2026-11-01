@@ -14,7 +14,13 @@ export interface SongView {
   wait: Wait;
   etaSeconds?: number;
   pollAfterSeconds?: number;
-  intro?: { templateUrl: string; nameAtMs: number };
+  // durationMs + nameSpots: the song's shape, drawn on the song screen.
+  intro?: { templateUrl: string; nameAtMs: number; durationMs: number; nameSpots: { startMs: number; endMs: number }[] };
+  // The name as it is sung (cleaned up by the server) and the song's style.
+  name: string;
+  genre?: string;
+  // The line being sung with the user's name in it, in the song's own script.
+  lyric?: string;
 }
 
 export interface CreateSongResponse extends SongView {

@@ -1,22 +1,22 @@
-// How each language the server offers is shown in the picker: its own name in its
-// own script, which is what users look for. Unknown codes fall back to the code.
-const LABELS: Record<string, string> = {
-  hi: "हिन्दी",
-  mr: "मराठी",
-  gu: "ગુજરાતી",
-  pa: "ਪੰਜਾਬੀ",
-  bn: "বাংলা",
-  ta: "தமிழ்",
-  te: "తెలుగు",
-  kn: "ಕನ್ನಡ",
-  ml: "മലയാളം",
-  en: "English",
+// How each language the server offers is shown: its own name in its own script
+// (what users look for), with the English name under it.
+const LABELS: Record<string, { native: string; english: string }> = {
+  hi: { native: "हिन्दी", english: "Hindi" },
+  bn: { native: "বাংলা", english: "Bengali" },
+  mr: { native: "मराठी", english: "Marathi" },
+  te: { native: "తెలుగు", english: "Telugu" },
+  ta: { native: "தமிழ்", english: "Tamil" },
+  gu: { native: "ગુજરાતી", english: "Gujarati" },
+  kn: { native: "ಕನ್ನಡ", english: "Kannada" },
+  ml: { native: "മലയാളം", english: "Malayalam" },
+  pa: { native: "ਪੰਜਾਬੀ", english: "Punjabi" },
+  en: { native: "English", english: "English" },
 };
 
 // The order users expect: Hindi first, then by number of speakers.
-const ORDER = ["hi", "bn", "mr", "te", "ta", "gu", "kn", "ml", "pa", "en"];
+const ORDER = Object.keys(LABELS);
 
-export const languageLabel = (code: string) => LABELS[code] ?? code.toUpperCase();
+export const languageLabel = (code: string) => LABELS[code] ?? { native: code.toUpperCase(), english: code.toUpperCase() };
 
 export const sortLanguages = (codes: string[]) =>
   [...codes].sort((a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99));

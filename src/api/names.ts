@@ -11,9 +11,10 @@ export interface Recording {
 export const getLanguages = () => request<LanguagesResponse>("/v1/languages");
 
 // The recording is sent once for speech-to-text and never stored by the server.
-export async function transcribe(audio: Recording, lang: string): Promise<TranscribeResponse> {
+// No language: the app asks for the name before the song language, so the server
+// detects the spoken language itself.
+export async function transcribe(audio: Recording): Promise<TranscribeResponse> {
   const form = new FormData();
-  form.append("lang", lang);
   if (Platform.OS === "web") {
     // On web the recorder gives a blob: URL; FormData needs the Blob itself.
     form.append("audio", await (await fetch(audio.uri)).blob(), "name.webm");

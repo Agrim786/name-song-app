@@ -1,12 +1,13 @@
 import { Text as RNText, type TextProps } from "react-native";
-import { colors, typography } from "./theme";
+import { useField } from "./field";
+import { type } from "./theme";
 
 interface Props extends TextProps {
-  variant?: keyof typeof typography;
+  variant?: keyof typeof type;
   muted?: boolean;
-  color?: string;
 }
 
-export function Text({ variant = "body", muted, color, style, ...rest }: Props) {
-  return <RNText {...rest} style={[typography[variant], { color: color ?? (muted ? colors.muted : colors.text) }, style]} />;
+export function Text({ variant = "body", muted, style, ...rest }: Props) {
+  const f = useField();
+  return <RNText {...rest} style={[type[variant], { color: muted ? f.muted : f.ink }, style]} />;
 }

@@ -34,10 +34,11 @@ export function useSongFlow() {
 
   const languages = useLanguages();
   const recorder = useRecorder();
-  const transcribe = useTranscribe();
-  const create = useCreateSong();
+  const { mutateAsync: runTranscribe } = useTranscribe();
+  const { mutate: createSong, reset: resetCreate, isPending: creating } = useCreateSong();
 
   const list = languages.data ?? [];
+  // Preselect the last language used, if the server still offers it.
   const lang = savedLang && (list.length === 0 || list.includes(savedLang)) ? savedLang : (list[0] ?? FALLBACK_LANG);
 
   const songId = phase.kind === "song" ? phase.songId : null;
@@ -55,24 +56,16 @@ export function useSongFlow() {
     if (pending && (status === "ready" || status === "failed")) setPending(null);
   }, [song.data?.status, pending, setPending]);
 
-  // Entering "transcribing" (after recording, or after a language change) sends the
-  // recording to speech-to-text in the current language.
-  const { mutateAsync: runTranscribe } = transcribe;
-  useEffect(() => {
-    if (phase.kind !== "transcribing") return;
-    let cancelled = false;
-    runTranscribe({ audio: phase.audio, lang })
-      .then((r) => !cancelled && send({ type: "TRANSCRIBED", name: r.name }))
-      .catch(() => !cancelled && send({ type: "TRANSCRIBE_FAILED" }));
-    return () => {
-      cancelled = true;
-    };
-  }, [phase, lang, runTranscribe, send]);
-
+  // Stopping hands the recording straight to speech-to-text. If the user moves on
+  // meanwhile, the machine ignores the late answer.
   const stopRecording = useCallback(async () => {
     const audio = await recorder.stop();
-    send(audio ? { type: "RECORD_DONE", audio } : { type: "RECORD_CANCEL" });
-  }, [recorder, send]);
+    if (!audio) return send({ type: "RECORD_CANCEL" });
+    send({ type: "RECORD_DONE", audio });
+    runTranscribe(audio)
+      .then((r) => send({ type: "TRANSCRIBED", name: r.name }))
+      .catch(() => send({ type: "TRANSCRIBE_FAILED" }));
+  }, [recorder, send, runTranscribe]);
 
   const startRecording = useCallback(async () => {
     send({ type: "RECORD_START" });
@@ -80,23 +73,16 @@ export function useSongFlow() {
     if (result !== "started") send({ type: "MIC_UNAVAILABLE" });
   }, [recorder, send, stopRecording]);
 
-  const chooseLanguage = useCallback(
-    (code: string) => {
-      if (code === lang) return;
-      setLang(code);
-      send({ type: "LANGUAGE_CHANGED" });
-    },
-    [lang, setLang, send],
-  );
-
   const editName = useCallback((name: string) => send({ type: "NAME_EDITED", name }), [send]);
+  const confirmName = useCallback(() => send({ type: "NAME_CONFIRMED" }), [send]);
+  const changeName = useCallback(() => send({ type: "CHANGE_NAME" }), [send]);
 
   const requestSong = useCallback(
-    (name: string, onDone: (songId: string) => void) =>
+    (name: string, songLang: string, onDone: (songId: string) => void) =>
       // A fresh key per tap; the mutation's own retries reuse it, so a flaky network
       // can never create two jobs for one tap.
-      create.mutate(
-        { name, lang, idempotencyKey: randomUUID() },
+      createSong(
+        { name, lang: songLang, idempotencyKey: randomUUID() },
         {
           onSuccess: (s) => {
             // Remember it in case the user leaves before it's ready.
@@ -106,37 +92,42 @@ export function useSongFlow() {
           onError: (e) => send({ type: "SUBMIT_FAILED", message: messageFor(e) }),
         },
       ),
-    [create, lang, setPending, send],
+    [createSong, setPending, send],
   );
 
-  const submit = useCallback(() => {
-    if (phase.kind !== "confirm" || !phase.name.trim()) return;
-    send({ type: "SUBMIT" });
-    requestSong(phase.name.trim(), (id) => send({ type: "SUBMITTED", songId: id }));
-  }, [phase, send, requestSong]);
+  const submit = useCallback(
+    (songLang: string) => {
+      if (phase.kind !== "language") return;
+      setLang(songLang);
+      send({ type: "SUBMIT", lang: songLang });
+      requestSong(phase.name, songLang, (id) => send({ type: "SUBMITTED", songId: id }));
+    },
+    [phase, setLang, send, requestSong],
+  );
 
   // "Try again" on a failed song: re-posting re-queues it on the server.
   const retrySong = useCallback(() => {
     if (phase.kind !== "song") return;
-    requestSong(phase.name, (id) => send({ type: "SONG_CHANGED", songId: id }));
-  }, [phase, requestSong, send]);
+    requestSong(phase.name, lang, (id) => send({ type: "SONG_CHANGED", songId: id }));
+  }, [phase, lang, requestSong, send]);
 
   const reset = useCallback(() => {
     setPending(null);
-    create.reset();
+    resetCreate();
     send({ type: "RESET" });
-  }, [create, setPending, send]);
+  }, [resetCreate, setPending, send]);
 
   return {
     phase,
     languages: list.length ? list : [lang],
     lang,
     song: song.data,
-    retrying: create.isPending && phase.kind === "song",
+    retrying: creating && phase.kind === "song",
     startRecording,
     stopRecording,
-    chooseLanguage,
     editName,
+    confirmName,
+    changeName,
     submit,
     retrySong,
     reset,
