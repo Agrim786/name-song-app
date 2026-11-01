@@ -6,6 +6,14 @@ import { config } from "../../config/config";
 // intro:   the template is playing while the song is being sung
 // holding: the intro reached the name spot before the song was ready; paused there
 // song:    the user's song is playing
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// Resolves when check() is true, or after timeoutMs either way.
+async function waitFor(check: () => boolean, timeoutMs: number) {
+  const until = Date.now() + timeoutMs;
+  while (!check() && Date.now() < until) await sleep(20);
+}
+
 export type PlayerStage = "idle" | "intro" | "holding" | "song";
 
 export interface PlaybackSnapshot {
@@ -120,7 +128,9 @@ export class SongPlayback {
     if (!this.intro || !this.song) {
       // Frequent ticks on the intro only: it must stop on time at the name spot.
       this.intro = createAudioPlayer(null, { updateInterval: 100 });
-      this.song = createAudioPlayer(null, { updateInterval: 500 });
+      // downloadFirst: the whole song is on the phone before it plays, so lining it
+      // up at the intro's position is instant instead of a network round-trip.
+      this.song = createAudioPlayer(null, { updateInterval: 500, downloadFirst: true });
       this.subs = [
         this.intro.addListener("playbackStatusUpdate", this.onIntro),
         this.song.addListener("playbackStatusUpdate", this.onSong),
@@ -156,11 +166,45 @@ export class SongPlayback {
     const { intro, song } = this.players();
     if (this.swapping || this.snap.stage === "song") return;
     this.swapping = true;
-    const from = this.snap.stage === "intro" ? intro.currentTime : this.snap.stage === "holding" ? this.holdAt : 0;
-    intro.pause();
-    await song.seekTo(from).catch(() => undefined);
-    song.volume = 1;
-    song.play();
+    const lead = config.swapLeadMs / 1000;
+    // Only hand over on the fly if that point is still before the name spot; closer
+    // than that, the intro could play into the template's placeholder word.
+    if (this.snap.stage === "intro" && intro.currentTime + lead <= this.holdAt) {
+      // Seamless hand-over. Saying "play" is not instant: Android's player needs
+      // 100-300 ms before sound comes out, and stopping the intro at that moment left
+      // an audible gap on first play (replays were fine). So: start the song silently
+      // first, wait until it is really playing, line it up with the intro, then
+      // crossfade. Both are the same audio up to the name spot, so it is inaudible.
+      song.volume = 0;
+      await song.seekTo(intro.currentTime + lead).catch(() => undefined);
+      song.play();
+      await waitFor(() => song.playing && song.currentTime > 0, 1500);
+      if (intro.currentTime + config.crossfadeMs / 1000 >= this.holdAt) {
+        // Warm-up ran into the name spot: stop there and continue with the song.
+        intro.pause();
+        await song.seekTo(this.holdAt).catch(() => undefined);
+        song.volume = 1;
+        this.swapping = false;
+        this.set({ stage: "song", playing: true });
+        return;
+      }
+      await song.seekTo(intro.currentTime).catch(() => undefined);
+      const steps = 6;
+      for (let i = 1; i <= steps; i++) {
+        song.volume = i / steps;
+        intro.volume = 1 - i / steps;
+        await sleep(config.crossfadeMs / steps);
+      }
+      intro.pause();
+    } else {
+      // Held at the name spot, about to reach it, or no intro at all (a song that was
+      // already made): stop the intro and start the song from the right point.
+      const from = this.snap.stage === "idle" ? 0 : Math.min(intro.currentTime, this.holdAt);
+      intro.pause();
+      await song.seekTo(from).catch(() => undefined);
+      song.volume = 1;
+      song.play();
+    }
     this.swapping = false;
     this.set({ stage: "song", playing: true });
   }

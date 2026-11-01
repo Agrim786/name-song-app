@@ -18,6 +18,10 @@ export const config = {
   // then, the intro fades out and holds there.
   holdBeforeNameMs: 500,
   fadeOutMs: 400,
+  // Intro-to-song hand-over: the song starts silently this far ahead (time for the
+  // player to warm up), is re-aligned with the intro, then they crossfade.
+  swapLeadMs: 400,
+  crossfadeMs: 150,
 
   // Used only if the server sends no pollAfterSeconds.
   defaultPollSeconds: 3,
