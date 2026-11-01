@@ -50,6 +50,16 @@ export function useSongFlow() {
     if (p) send({ type: "RESUME", songId: p.songId, name: p.name });
   }, [send]);
 
+  // The server doesn't know this song (a saved "come back later" song whose record
+  // is gone): forget it and start over, instead of waiting on it forever.
+  useEffect(() => {
+    const e = song.error;
+    if (e instanceof ApiError && e.status === 404) {
+      setPending(null);
+      send({ type: "RESET" });
+    }
+  }, [song.error, setPending, send]);
+
   // Done (or failed): nothing to come back for anymore.
   useEffect(() => {
     const status = song.data?.status;

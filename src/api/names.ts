@@ -1,3 +1,4 @@
+import { File } from "expo-file-system";
 import { Platform } from "react-native";
 import { config } from "../config/config";
 import { request } from "./client";
@@ -19,8 +20,12 @@ export async function transcribe(audio: Recording): Promise<TranscribeResponse> 
     // On web the recorder gives a blob: URL; FormData needs the Blob itself.
     form.append("audio", await (await fetch(audio.uri)).blob(), "name.webm");
   } else {
-    // React Native's FormData uploads a local file from {uri, name, type}.
-    form.append("audio", { uri: audio.uri, name: "name.m4a", type: audio.mimeType } as unknown as Blob);
+    // Expo's fetch only uploads parts that are text, a Blob, or have bytes(). The
+    // classic React Native {uri, name, type} object fails before sending ("Unsupported
+    // FormDataPart implementation"), which silently broke speech-to-text on phones.
+    // So: the recording as an expo-file-system File, with an explicit name and type.
+    const file = new File(audio.uri);
+    form.append("audio", { name: "name.m4a", type: audio.mimeType, bytes: () => file.bytes() } as unknown as Blob);
   }
   return request<TranscribeResponse>("/v1/names/transcribe", { method: "POST", body: form, timeoutMs: config.uploadTimeoutMs });
 }
