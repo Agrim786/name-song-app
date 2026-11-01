@@ -14,7 +14,9 @@ export const getLanguages = () => request<LanguagesResponse>("/v1/languages");
 // The recording is sent once for speech-to-text and never stored by the server.
 // No language: the app asks for the name before the song language, so the server
 // detects the spoken language itself.
-export async function transcribe(audio: Recording): Promise<TranscribeResponse> {
+export async function transcribe(
+  audio: Recording,
+): Promise<TranscribeResponse> {
   const form = new FormData();
   if (Platform.OS === "web") {
     // On web the recorder gives a blob: URL; FormData needs the Blob itself.
@@ -25,7 +27,15 @@ export async function transcribe(audio: Recording): Promise<TranscribeResponse> 
     // FormDataPart implementation"), which silently broke speech-to-text on phones.
     // So: the recording as an expo-file-system File, with an explicit name and type.
     const file = new File(audio.uri);
-    form.append("audio", { name: "name.m4a", type: audio.mimeType, bytes: () => file.bytes() } as unknown as Blob);
+    form.append("audio", {
+      name: "name.m4a",
+      type: audio.mimeType,
+      bytes: () => file.bytes(),
+    } as unknown as Blob);
   }
-  return request<TranscribeResponse>("/v1/names/transcribe", { method: "POST", body: form, timeoutMs: config.uploadTimeoutMs });
+  return request<TranscribeResponse>("/v1/names/transcribe", {
+    method: "POST",
+    body: form,
+    timeoutMs: config.uploadTimeoutMs,
+  });
 }

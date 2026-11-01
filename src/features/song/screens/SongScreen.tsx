@@ -9,7 +9,9 @@ import { useSongPlayer } from "../hooks/useSongPlayer";
 // The app's only screen. It renders the current phase; all logic lives in hooks.
 export function SongScreen() {
   const flow = useSongFlow();
-  const player = useSongPlayer(flow.phase.kind === "song" ? flow.song : undefined);
+  const player = useSongPlayer(
+    flow.phase.kind === "song" ? flow.song : undefined,
+  );
   const { phase } = flow;
 
   const another = () => {
@@ -19,9 +21,17 @@ export function SongScreen() {
 
   return (
     <Screen>
-      {(phase.kind === "idle" || phase.kind === "recording" || phase.kind === "transcribing") && (
+      {(phase.kind === "idle" ||
+        phase.kind === "recording" ||
+        phase.kind === "transcribing") && (
         <NameStep
-          state={phase.kind === "recording" ? "recording" : phase.kind === "transcribing" ? "busy" : "idle"}
+          state={
+            phase.kind === "recording"
+              ? "recording"
+              : phase.kind === "transcribing"
+                ? "busy"
+                : "idle"
+          }
           onStart={flow.startRecording}
           onStop={flow.stopRecording}
         />

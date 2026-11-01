@@ -1,4 +1,8 @@
-import { type AudioPlayer, type AudioStatus, createAudioPlayer } from "expo-audio";
+import {
+  type AudioPlayer,
+  type AudioStatus,
+  createAudioPlayer,
+} from "expo-audio";
 import type { SongView } from "../../api/types";
 import { config } from "../../config/config";
 
@@ -55,7 +59,8 @@ export class SongPlayback {
   update = (view: SongView | undefined) => {
     if (!view) return;
     const { intro, song } = this.players();
-    if (view.intro) this.holdAt = (view.intro.nameAtMs - config.holdBeforeNameMs) / 1000;
+    if (view.intro)
+      this.holdAt = (view.intro.nameAtMs - config.holdBeforeNameMs) / 1000;
 
     const songUrl = view.status === "ready" ? view.url : undefined;
     if (songUrl && songUrl !== this.songUrl) {
@@ -66,7 +71,12 @@ export class SongPlayback {
     }
 
     const shortWait = view.wait === "short" && !songUrl;
-    if (shortWait && view.intro && view.intro.templateUrl !== this.introUrl && this.snap.stage === "idle") {
+    if (
+      shortWait &&
+      view.intro &&
+      view.intro.templateUrl !== this.introUrl &&
+      this.snap.stage === "idle"
+    ) {
       this.introUrl = view.intro.templateUrl;
       intro.replace({ uri: view.intro.templateUrl });
       intro.volume = 1;
@@ -75,7 +85,10 @@ export class SongPlayback {
     }
 
     // The line turned long while the intro played: stop rather than hold forever.
-    if (view.wait === "later" && (this.snap.stage === "intro" || this.snap.stage === "holding")) {
+    if (
+      view.wait === "later" &&
+      (this.snap.stage === "intro" || this.snap.stage === "holding")
+    ) {
       intro.pause();
       this.set({ stage: "idle", playing: false });
     }
@@ -91,7 +104,8 @@ export class SongPlayback {
       return;
     }
     // Finished: play again from the top.
-    if (song.duration > 0 && song.currentTime >= song.duration - 0.25) void song.seekTo(0);
+    if (song.duration > 0 && song.currentTime >= song.duration - 0.25)
+      void song.seekTo(0);
     song.play();
     this.set({ playing: true });
   };
@@ -130,7 +144,10 @@ export class SongPlayback {
       this.intro = createAudioPlayer(null, { updateInterval: 100 });
       // downloadFirst: the whole song is on the phone before it plays, so lining it
       // up at the intro's position is instant instead of a network round-trip.
-      this.song = createAudioPlayer(null, { updateInterval: 500, downloadFirst: true });
+      this.song = createAudioPlayer(null, {
+        updateInterval: 500,
+        downloadFirst: true,
+      });
       this.subs = [
         this.intro.addListener("playbackStatusUpdate", this.onIntro),
         this.song.addListener("playbackStatusUpdate", this.onSong),
@@ -157,7 +174,8 @@ export class SongPlayback {
       this.songLoaded = true;
       void this.swap();
     }
-    if (this.snap.stage === "song" && s.playing !== this.snap.playing) this.set({ playing: s.playing });
+    if (this.snap.stage === "song" && s.playing !== this.snap.playing)
+      this.set({ playing: s.playing });
   };
 
   // Continue from where the intro is (or the hold point, or the start if there was
@@ -169,7 +187,10 @@ export class SongPlayback {
     const lead = config.swapLeadMs / 1000;
     // Only hand over on the fly if that point is still before the name spot; closer
     // than that, the intro could play into the template's placeholder word.
-    if (this.snap.stage === "intro" && intro.currentTime + lead <= this.holdAt) {
+    if (
+      this.snap.stage === "intro" &&
+      intro.currentTime + lead <= this.holdAt
+    ) {
       // Seamless hand-over. Saying "play" is not instant: Android's player needs
       // 100-300 ms before sound comes out, and stopping the intro at that moment left
       // an audible gap on first play (replays were fine). So: start the song silently
@@ -199,7 +220,10 @@ export class SongPlayback {
     } else {
       // Held at the name spot, about to reach it, or no intro at all (a song that was
       // already made): stop the intro and start the song from the right point.
-      const from = this.snap.stage === "idle" ? 0 : Math.min(intro.currentTime, this.holdAt);
+      const from =
+        this.snap.stage === "idle"
+          ? 0
+          : Math.min(intro.currentTime, this.holdAt);
       intro.pause();
       await song.seekTo(from).catch(() => undefined);
       song.volume = 1;
@@ -211,7 +235,8 @@ export class SongPlayback {
 
   private set(patch: Partial<PlaybackSnapshot>) {
     const next = { ...this.snap, ...patch };
-    if (next.stage === this.snap.stage && next.playing === this.snap.playing) return;
+    if (next.stage === this.snap.stage && next.playing === this.snap.playing)
+      return;
     this.snap = next;
     this.listeners.forEach((l) => l());
   }

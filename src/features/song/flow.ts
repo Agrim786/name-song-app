@@ -44,9 +44,13 @@ export function transition(p: Phase, e: FlowEvent): Phase {
       return initialPhase;
     // Reopened app with a song still in line: show it.
     case "RESUME":
-      return p.kind === "idle" ? { kind: "song", songId: e.songId, name: e.name } : p;
+      return p.kind === "idle"
+        ? { kind: "song", songId: e.songId, name: e.name }
+        : p;
     case "RECORD_START":
-      return p.kind === "idle" || p.kind === "confirm" ? { kind: "recording" } : p;
+      return p.kind === "idle" || p.kind === "confirm"
+        ? { kind: "recording" }
+        : p;
     // The audio itself is handed to speech-to-text by the caller; the screen only
     // needs to know it is being heard.
     case "RECORD_DONE":
@@ -54,23 +58,44 @@ export function transition(p: Phase, e: FlowEvent): Phase {
     case "RECORD_CANCEL":
       return p.kind === "recording" ? initialPhase : p;
     case "MIC_UNAVAILABLE":
-      return p.kind === "idle" || p.kind === "recording" ? { kind: "confirm", name: "", heard: false, micUnavailable: true } : p;
+      return p.kind === "idle" || p.kind === "recording"
+        ? { kind: "confirm", name: "", heard: false, micUnavailable: true }
+        : p;
     case "TRANSCRIBED":
-      return p.kind === "transcribing" ? { kind: "confirm", name: e.name ?? "", heard: e.name !== null, micUnavailable: false } : p;
+      return p.kind === "transcribing"
+        ? {
+            kind: "confirm",
+            name: e.name ?? "",
+            heard: e.name !== null,
+            micUnavailable: false,
+          }
+        : p;
     case "TRANSCRIBE_FAILED":
-      return p.kind === "transcribing" ? { kind: "confirm", name: "", heard: false, micUnavailable: false } : p;
+      return p.kind === "transcribing"
+        ? { kind: "confirm", name: "", heard: false, micUnavailable: false }
+        : p;
     case "NAME_EDITED":
       return p.kind === "confirm" ? { ...p, name: e.name } : p;
     case "NAME_CONFIRMED":
-      return p.kind === "confirm" && p.name.trim() ? { kind: "language", name: p.name.trim() } : p;
+      return p.kind === "confirm" && p.name.trim()
+        ? { kind: "language", name: p.name.trim() }
+        : p;
     case "CHANGE_NAME":
-      return p.kind === "language" ? { kind: "confirm", name: p.name, heard: true, micUnavailable: false } : p;
+      return p.kind === "language"
+        ? { kind: "confirm", name: p.name, heard: true, micUnavailable: false }
+        : p;
     case "SUBMIT":
-      return p.kind === "language" ? { kind: "submitting", name: p.name, lang: e.lang } : p;
+      return p.kind === "language"
+        ? { kind: "submitting", name: p.name, lang: e.lang }
+        : p;
     case "SUBMITTED":
-      return p.kind === "submitting" ? { kind: "song", songId: e.songId, name: p.name } : p;
+      return p.kind === "submitting"
+        ? { kind: "song", songId: e.songId, name: p.name }
+        : p;
     case "SUBMIT_FAILED":
-      return p.kind === "submitting" ? { kind: "language", name: p.name, error: e.message } : p;
+      return p.kind === "submitting"
+        ? { kind: "language", name: p.name, error: e.message }
+        : p;
     case "SONG_CHANGED":
       return p.kind === "song" ? { ...p, songId: e.songId } : p;
   }

@@ -21,6 +21,10 @@ export const usePrefsStore = create<PrefsState>()(
       setLang: (lang) => set({ lang }),
       setPending: (pending) => set({ pending }),
     }),
-    { name: "prefs", storage: createJSONStorage(() => zustandStorage), version: 1 },
+    {
+      name: "prefs",
+      storage: createJSONStorage(() => zustandStorage),
+      version: 1,
+    },
   ),
 );

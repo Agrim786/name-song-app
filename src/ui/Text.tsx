@@ -9,5 +9,10 @@ interface Props extends TextProps {
 
 export function Text({ variant = "body", muted, style, ...rest }: Props) {
   const f = useField();
-  return <RNText {...rest} style={[type[variant], { color: muted ? f.muted : f.ink }, style]} />;
+  return (
+    <RNText
+      {...rest}
+      style={[type[variant], { color: muted ? f.muted : f.ink }, style]}
+    />
+  );
 }

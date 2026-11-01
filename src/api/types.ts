@@ -15,7 +15,12 @@ export interface SongView {
   etaSeconds?: number;
   pollAfterSeconds?: number;
   // durationMs + nameSpots: the song's shape, drawn on the song screen.
-  intro?: { templateUrl: string; nameAtMs: number; durationMs: number; nameSpots: { startMs: number; endMs: number }[] };
+  intro?: {
+    templateUrl: string;
+    nameAtMs: number;
+    durationMs: number;
+    nameSpots: { startMs: number; endMs: number }[];
+  };
   // The name as it is sung (cleaned up by the server) and the song's style.
   name: string;
   genre?: string;

@@ -14,8 +14,18 @@ interface Props {
 
 // The headline asks; the big disc, centred in the rest of the screen, answers.
 export function NameStep({ state, onStart, onStop }: Props) {
-  const title = state === "recording" ? strings.listeningTitle : state === "busy" ? strings.hearingTitle : strings.nameTitle;
-  const lead = state === "recording" ? strings.listeningLead : state === "busy" ? strings.hearingLead : strings.nameLead;
+  const title =
+    state === "recording"
+      ? strings.listeningTitle
+      : state === "busy"
+        ? strings.hearingTitle
+        : strings.nameTitle;
+  const lead =
+    state === "recording"
+      ? strings.listeningLead
+      : state === "busy"
+        ? strings.hearingLead
+        : strings.nameLead;
   return (
     <View style={styles.fill}>
       <Rise key={title}>
@@ -27,7 +37,13 @@ export function NameStep({ state, onStart, onStop }: Props) {
         </Text>
       </Rise>
       <Rise delay={80} style={styles.center}>
-        <MicButton state={state} label={state === "recording" ? strings.listeningLead : strings.micStart} onPress={state === "recording" ? onStop : onStart} />
+        <MicButton
+          state={state}
+          label={
+            state === "recording" ? strings.listeningLead : strings.micStart
+          }
+          onPress={state === "recording" ? onStop : onStart}
+        />
         <View style={styles.under}>
           {state === "idle" && <Text muted>{strings.micStart}</Text>}
           {state === "recording" && <RecordTimer />}
@@ -40,7 +56,12 @@ export function NameStep({ state, onStart, onStop }: Props) {
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   lead: { marginTop: space(3) },
-  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: space(6) },
+  center: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: space(6),
+  },
   // Fixed height so the disc never jumps when the line under it changes.
   under: { height: 32, justifyContent: "center" },
 });

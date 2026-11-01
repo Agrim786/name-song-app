@@ -12,7 +12,13 @@ interface Props {
   disabled?: boolean;
 }
 
-export function Button({ label, onPress, variant = "solid", loading, disabled }: Props) {
+export function Button({
+  label,
+  onPress,
+  variant = "solid",
+  loading,
+  disabled,
+}: Props) {
   const f = useField();
   const solid = variant === "solid";
   const inactive = disabled || loading;
@@ -26,7 +32,9 @@ export function Button({ label, onPress, variant = "solid", loading, disabled }:
       hitSlop={solid ? undefined : 8}
       style={({ pressed }) => [
         // Disabled solid button: a quiet tone step, not a faded (muddy) action colour.
-        solid ? [styles.solid, { backgroundColor: disabled ? f.surface : f.action }] : styles.text,
+        solid
+          ? [styles.solid, { backgroundColor: disabled ? f.surface : f.action }]
+          : styles.text,
         !solid && inactive && styles.inactive,
         pressed && styles.pressed,
       ]}
@@ -34,7 +42,13 @@ export function Button({ label, onPress, variant = "solid", loading, disabled }:
       {loading ? (
         <ActivityIndicator color={solid ? f.actionInk : f.ink} />
       ) : (
-        <Text variant={solid ? "lead" : "body"} style={[solid && { color: disabled ? f.muted : f.actionInk }, !solid && styles.underline]}>
+        <Text
+          variant={solid ? "lead" : "body"}
+          style={[
+            solid && { color: disabled ? f.muted : f.actionInk },
+            !solid && styles.underline,
+          ]}
+        >
           {label}
         </Text>
       )}
@@ -43,7 +57,13 @@ export function Button({ label, onPress, variant = "solid", loading, disabled }:
 }
 
 const styles = StyleSheet.create({
-  solid: { minHeight: 60, borderRadius: radius.pill, paddingHorizontal: space(8), alignItems: "center", justifyContent: "center" },
+  solid: {
+    minHeight: 60,
+    borderRadius: radius.pill,
+    paddingHorizontal: space(8),
+    alignItems: "center",
+    justifyContent: "center",
+  },
   text: { minHeight: 44, justifyContent: "center", alignSelf: "center" },
   underline: { textDecorationLine: "underline", textAlign: "center" },
   inactive: { opacity: 0.45 },

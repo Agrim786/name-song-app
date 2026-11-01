@@ -12,7 +12,11 @@ export const createSong = ({ name, lang, idempotencyKey }: CreateSongInput) =>
   request<CreateSongResponse>("/v1/songs", {
     method: "POST",
     body: JSON.stringify({ name, lang }),
-    headers: { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey },
+    headers: {
+      "Content-Type": "application/json",
+      "Idempotency-Key": idempotencyKey,
+    },
   });
 
-export const getSong = (songId: string) => request<SongView>(`/v1/songs/${songId}`);
+export const getSong = (songId: string) =>
+  request<SongView>(`/v1/songs/${songId}`);

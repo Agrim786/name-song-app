@@ -5,7 +5,8 @@ import { ApiError, isRetryable } from "./client";
 // Exponential backoff with jitter, so thousands of phones retrying after a blip do
 // not hit the server in the same instant. Honours the server's Retry-After.
 const retryDelay = (attempt: number, error: unknown) => {
-  if (error instanceof ApiError && error.retryAfterMs) return error.retryAfterMs;
+  if (error instanceof ApiError && error.retryAfterMs)
+    return error.retryAfterMs;
   const base = Math.min(1000 * 2 ** attempt, 8000);
   return base / 2 + Math.random() * (base / 2);
 };
@@ -28,7 +29,9 @@ export const queryClient = new QueryClient({
 // polling pauses in the background and resumes (with a fresh fetch) on return.
 if (Platform.OS !== "web") {
   focusManager.setEventListener((setFocused) => {
-    const sub = AppState.addEventListener("change", (s) => setFocused(s === "active"));
+    const sub = AppState.addEventListener("change", (s) =>
+      setFocused(s === "active"),
+    );
     return () => sub.remove();
   });
 }

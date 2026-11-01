@@ -19,7 +19,10 @@ const NAME_RECORDING: RecordingOptions = {
   numberOfChannels: 1,
   bitRate: 32_000,
   android: { outputFormat: "mpeg4", audioEncoder: "aac" },
-  ios: { outputFormat: IOSOutputFormat.MPEG4AAC, audioQuality: AudioQuality.MEDIUM },
+  ios: {
+    outputFormat: IOSOutputFormat.MPEG4AAC,
+    audioQuality: AudioQuality.MEDIUM,
+  },
   web: { mimeType: "audio/webm", bitsPerSecond: 32_000 },
 };
 
@@ -41,7 +44,10 @@ export function useRecorder() {
       try {
         const perm = await requestRecordingPermissionsAsync();
         if (!perm.granted) return "denied";
-        await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+        await setAudioModeAsync({
+          allowsRecording: true,
+          playsInSilentMode: true,
+        });
         await recorder.prepareToRecordAsync();
         recorder.record();
         startedAt.current = Date.now();
@@ -61,9 +67,16 @@ export function useRecorder() {
       if (!recorder.isRecording) return null;
       await recorder.stop();
       // Back to playback mode, so iOS plays the song through the speaker.
-      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
-      if (Date.now() - startedAt.current < config.minRecordMs || !recorder.uri) return null;
-      return { uri: recorder.uri, mimeType: Platform.OS === "web" ? "audio/webm" : "audio/mp4" };
+      await setAudioModeAsync({
+        allowsRecording: false,
+        playsInSilentMode: true,
+      });
+      if (Date.now() - startedAt.current < config.minRecordMs || !recorder.uri)
+        return null;
+      return {
+        uri: recorder.uri,
+        mimeType: Platform.OS === "web" ? "audio/webm" : "audio/mp4",
+      };
     } catch {
       return null;
     }

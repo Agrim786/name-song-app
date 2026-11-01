@@ -16,7 +16,10 @@ const LABELS: Record<string, { native: string; english: string }> = {
 // The order users expect: Hindi first, then by number of speakers.
 const ORDER = Object.keys(LABELS);
 
-export const languageLabel = (code: string) => LABELS[code] ?? { native: code.toUpperCase(), english: code.toUpperCase() };
+export const languageLabel = (code: string) =>
+  LABELS[code] ?? { native: code.toUpperCase(), english: code.toUpperCase() };
 
 export const sortLanguages = (codes: string[]) =>
-  [...codes].sort((a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99));
+  [...codes].sort(
+    (a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99),
+  );

@@ -1,6 +1,7 @@
 // Every tunable in one place. EXPO_PUBLIC_ vars are inlined at build time.
 const apiUrl = process.env.EXPO_PUBLIC_API_URL;
-if (!apiUrl && __DEV__) console.warn("EXPO_PUBLIC_API_URL is not set; using http://localhost:8080");
+if (!apiUrl && __DEV__)
+  console.warn("EXPO_PUBLIC_API_URL is not set; using http://localhost:8080");
 
 export const config = {
   apiUrl: (apiUrl ?? "http://localhost:8080").replace(/\/$/, ""),

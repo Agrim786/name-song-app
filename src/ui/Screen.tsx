@@ -11,7 +11,10 @@ export function Screen({ children }: { children: ReactNode }) {
     <FieldProvider value={paper}>
       <SafeAreaView style={[styles.safe, { backgroundColor: paper.bg }]}>
         <StatusBar style={paper.statusBar} />
-        <KeyboardAvoidingView style={styles.body} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <KeyboardAvoidingView
+          style={styles.body}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
           {children}
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -22,5 +25,10 @@ export function Screen({ children }: { children: ReactNode }) {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   // One pair of equal side margins everywhere.
-  body: { flex: 1, paddingHorizontal: space(6), paddingTop: space(10), paddingBottom: space(6) },
+  body: {
+    flex: 1,
+    paddingHorizontal: space(6),
+    paddingTop: space(10),
+    paddingBottom: space(6),
+  },
 });
